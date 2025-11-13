@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Comments Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #ffffff; /* oq fon */
+            color: #111;
+            min-height: 100vh;
+            padding: 28px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* Header: minimalist, small accent */
+        .header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        /* Logo wrapper: circular logo above the title */
+        .logo-wrap {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .logo {
+            width: 84px;
+            height: 84px;
+            border-radius: 50%;
+            background: linear-gradient(90deg, #F5A623 0%, #FCD34D 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: #111;
+            font-weight: 800;
+            box-shadow: 0 6px 18px rgba(245,166,35,0.06);
+        }
+
+        .logo img {
+            width: 84px;
+            height: 84px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: none; /* shown only if image loads */
+        }
+
+        #logoPlaceholder { display: flex; }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 6px;
+            font-weight: 700;
+            color: #111;
+        }
+
+        .header p {
+            font-size: 1em;
+            color: #666;
+        }
+
+        /* Card with light border and plenty of whitespace */
+        .card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 28px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(245,166,35,0.10);
+        }
+
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #222;
+        }
+
+        .input-group input[type="text"],
+        .input-group input[type="number"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #e9e6e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            background: #fff;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: rgba(245,166,35,0.45);
+            box-shadow: 0 4px 12px rgba(245,166,35,0.06);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.12s ease, box-shadow 0.12s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        button:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        /* Primary: gradient using provided colors */
+        .btn-primary {
+            background: linear-gradient(90deg, #F5A623 0%, #FCD34D 100%);
+            color: #111;
+            box-shadow: none;
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(245,166,35,0.08);
+        }
+
+        /* Secondary variants: simple outlined with accent text */
+        .btn-success, .btn-warning, .btn-info {
+            background: transparent;
+            color: #F5A623;
+            border: 1px solid rgba(245,166,35,0.15);
+        }
+
+        .btn-success:hover:not(:disabled), .btn-warning:hover:not(:disabled), .btn-info:hover:not(:disabled) {
+            background: rgba(245,166,35,0.04);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 18px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #F5A623;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: none;
+            font-weight: 600;
+        }
+
+        .alert-success {
+            background: rgba(245,166,35,0.10);
+            color: #111;
+            border: 1px solid rgba(245,166,35,0.12);
+        }
+
+        .alert-error {
+            background: rgba(220,38,38,0.06);
+            color: #9b1c1c;
+            border: 1px solid rgba(220,38,38,0.08);
+        }
+
+        .alert-info {
+            background: rgba(14,165,233,0.06);
+            color: #0c5460;
+            border: 1px solid rgba(14,165,233,0.08);
+        }
+
+        .post-info-card {
+            display: none;
+            background: linear-gradient(90deg, #F5A623 0%, #FCD34D 100%);
+            color: #111;
+            padding: 18px;
+            border-radius: 10px;
+            margin-bottom: 16px;
+        }
+
+        .post-info-card h4 {
+            margin-bottom: 8px;
+            font-size: 1.05em;
+            font-weight: 700;
+        }
+
+        .post-stats {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .post-stat-item {
+            background: rgba(255,255,255,0.6);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .results {
+            display: none;
+            margin-top: 18px;
+        }
+
+        .results h3 {
+            margin-bottom: 12px;
+            color: #111;
+        }
+
+        .comment-item {
+            background: #ffffff;
+            padding: 14px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #F5A623;
+            box-shadow: none;
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .comment-user {
+            font-weight: 700;
+            color: #111;
+        }
+
+        .comment-likes {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .comment-text {
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .comment-date {
+            font-size: 0.85em;
+            color: #888;
+            margin-top: 6px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 700;
+        }
+
+        .badge-verified {
+            background: #F5A623;
+            color: #111;
+        }
+
+        /* Modal styles */
+        .modal-backdrop {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-backdrop.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            position: relative;
+            text-align: center;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .modal-close:hover {
+            color: #111;
+        }
+
+        .winner-emoji {
+            font-size: 56px;
+            margin-bottom: 16px;
+        }
+
+        .winner-title {
+            font-size: 1.4em;
+            font-weight: 700;
+            color: #111;
+            margin-bottom: 8px;
+        }
+
+        .winner-name {
+            font-size: 1.1em;
+            color: #F5A623;
+            font-weight: 600;
+            margin-bottom: 12px;
+            word-break: break-all;
+        }
+
+        .winner-stats {
+            background: rgba(245,166,35,0.06);
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .modal-btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: transform 0.12s ease, box-shadow 0.12s ease;
+        }
+
+        .modal-btn-primary {
+            background: linear-gradient(90deg, #F5A623 0%, #FCD34D 100%);
+            color: #111;
+        }
+
+        .modal-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(245,166,35,0.08);
+        }
+
+        .modal-btn-secondary {
+            background: transparent;
+            border: 1px solid rgba(245,166,35,0.15);
+            color: #F5A623;
+        }
+
+        .modal-btn-secondary:hover {
+            background: rgba(245,166,35,0.04);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.6em;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo-wrap">
+                <!-- Image will be used if available at /static/img/logo.png -->
+                <img id="siteLogo" src="/static/img/logo.png" alt="Logo" 
+                    onload="this.style.display='block'; document.getElementById('logoPlaceholder').style.display='none';" 
+                    onerror="this.style.display='none'; document.getElementById('logoPlaceholder').style.display='flex';" />
+                <!-- Fallback placeholder (visible when image missing) - 'o' shaped ring -->
+                <div id="logoPlaceholder" class="logo" aria-hidden="true">
+                    <svg viewBox="0 0 100 100" width="56" height="56" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="logo">
+                        <!-- faint stroke for subtle ring -->
+                        <circle cx="50" cy="50" r="36" fill="none" stroke="#111" stroke-width="8" stroke-linecap="round" stroke-opacity="0.06"/>
+                        <!-- main accent ring using requested color -->
+                        <circle cx="50" cy="50" r="32" fill="none" stroke="#F5A623" stroke-width="8" stroke-linecap="round"/>
+                    </svg>
+                </div>
+            </div>
+            <h1>Instagram Comments Analyzer</h1>
+            <p>zayd.catlover uchun maxsus</p>
+        </div>
+
+        <div class="card">
+            <div class="alert alert-success" id="successAlert"></div>
+            <div class="alert alert-error" id="errorAlert"></div>
+            <div class="alert alert-info" id="infoAlert"></div>
+
+            <div class="input-group">
+                <label for="postUrl">Instagram Post URL</label>
+                <input type="text" id="postUrl" placeholder="https://www.instagram.com/p/XXXXXXXXX/" />
+                <small style="color: #666; display: block; margin-top: 5px;">
+                    Misol: https://www.instagram.com/p/ABC123xyz/ yoki faqat ABC123xyz
+                </small>
+            </div>
+
+            <!-- Maksimal commentlar soni maydoni olib tashlandi; barcha commentlar olinadi -->
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="getPostComments()" id="getCommentsBtn">
+                    Barcha commentlarni olish
+                </button>
+                <button class="btn-primary" onclick="pickWinner()" id="pickWinnerBtn" disabled>
+                    G'olibni aniqlash
+                </button>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Ma'lumotlar yuklanmoqda...</p>
+            </div>
+
+            <div class="post-info-card" id="postInfoCard">
+                <h4>Post Ma'lumotlari</h4>
+                <div class="post-stats" id="postStats"></div>
+            </div>
+
+            <div class="results" id="commentsResults">
+                <h3>Commentlar (<span id="commentCount">0</span> ta)</h3>
+                <div id="commentsList"></div>
+                <!-- Winner card (hidden until a winner is picked) -->
+                <div id="winnerCard" style="display:none; margin-top:16px;">
+                    <div class="comment-item" id="winnerProfile" style="border-left-color: #F5A623; background: linear-gradient(180deg, rgba(245,166,35,0.06), #fff);">
+                        <div class="comment-header">
+                            <div>
+                                <span id="winnerUsername" class="comment-user"></span>
+                                <span id="winnerBadge" class="badge badge-verified" style="display:none; margin-left:8px;">✓</span>
+                            </div>
+                            <div class="comment-likes">🏆 G'olib</div>
+                        </div>
+                        <div id="winnerMeta" class="comment-text" style="margin-bottom:10px;"></div>
+                        <div style="display:flex; gap:10px; justify-content:flex-start;">
+                            <a id="winnerProfileBtn" class="btn-primary" href="#" target="_blank" rel="noopener noreferrer" style="text-decoration:none; display:inline-flex; align-items:center;">Profileni ko'rish</a>
+                            <button id="winnerCloseBtn" class="btn-success" style="background:transparent; border:1px solid rgba(245,166,35,0.12); color:#F5A623;" onclick="document.getElementById('winnerCard').style.display='none'">Yopish</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Winner Modal -->
+    <div id="winnerModal" class="modal-backdrop">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeWinnerModal()">×</button>
+            <div class="winner-emoji">🏆</div>
+            <div class="winner-title">Tabriklaymiz!</div>
+            <div class="winner-name" id="modalWinnerUsername"></div>
+            <div class="winner-stats" id="modalWinnerStats"></div>
+            <div class="modal-buttons">
+                <a id="modalProfileBtn" class="modal-btn modal-btn-primary" href="#" target="_blank" rel="noopener noreferrer">Profileni ko'rish</a>
+                <button class="modal-btn modal-btn-secondary" onclick="closeWinnerModal()">Yopish</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let commentsData = [];
+        let currentPostUrl = '';
+
+        function showAlert(type, message) {
+            const alertIds = {
+                'success': 'successAlert',
+                'error': 'errorAlert',
+                'info': 'infoAlert'
+            };
+            
+            const alertId = alertIds[type];
+            const alertElement = document.getElementById(alertId);
+            
+            // Barcha alertlarni yashirish
+            Object.values(alertIds).forEach(id => {
+                document.getElementById(id).style.display = 'none';
+            });
+            
+            // Kerakli alertni ko'rsatish
+            alertElement.textContent = message;
+            alertElement.style.display = 'block';
+            
+            // 5 soniyadan keyin yashirish
+            setTimeout(() => {
+                alertElement.style.display = 'none';
+            }, 5000);
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        async function getPostInfo() {
+            const postUrl = document.getElementById('postUrl').value.trim();
+            
+            if (!postUrl) {
+                showAlert('error', 'Iltimos post URL kiriting!');
+                return;
+            }
+
+            currentPostUrl = postUrl;
+            showLoading(true);
+
+            try {
+                const response = await fetch('/api/post-info', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ post_url: postUrl })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayPostInfo(result.data);
+                    showAlert('success', 'Post ma\'lumotlari muvaffaqiyatli yuklandi!');
+                } else {
+                    showAlert('error', result.error || 'Post topilmadi');
+                }
+            } catch (error) {
+                showAlert('error', 'Server bilan bog\'lanishda xatolik: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function displayPostInfo(data) {
+            const postInfoCard = document.getElementById('postInfoCard');
+            const postStats = document.getElementById('postStats');
+            
+            postStats.innerHTML = `
+                <div class="post-stat-item">
+                    <strong>👤 Egasi:</strong><br>
+                    @${data.owner_username}
+                </div>
+                <div class="post-stat-item">
+                    <strong>❤️ Like:</strong><br>
+                    ${data.like_count.toLocaleString()}
+                </div>
+                <div class="post-stat-item">
+                    <strong>💬 Comment:</strong><br>
+                    ${data.comment_count.toLocaleString()}
+                </div>
+                ${data.is_video ? `<div class="post-stat-item">
+                    <strong>👁️ Ko'rishlar:</strong><br>
+                    ${data.video_view_count.toLocaleString()}
+                </div>` : ''}
+                <div class="post-stat-item">
+                    <strong>🔗 Havola:</strong><br>
+                    <a href="${data.url}" target="_blank" style="color: white;">Postga o'tish →</a>
+                </div>
+            `;
+            
+            postInfoCard.style.display = 'block';
+        }
+
+        async function getPostComments() {
+            const postUrl = document.getElementById('postUrl').value.trim();
+            
+            if (!postUrl) {
+                showAlert('error', 'Iltimos post URL kiriting!');
+                return;
+            }
+
+            currentPostUrl = postUrl;
+            showLoading(true);
+            document.getElementById('getCommentsBtn').disabled = true;
+
+            try {
+                const requestData = { post_url: postUrl };
+
+                const response = await fetch('/api/post-comments', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    commentsData = result.data;
+                    displayComments(commentsData);
+                    showAlert('success', `${result.count} ta comment muvaffaqiyatli yuklandi!`);
+                    
+                    // Tugmalarni faollashtirish
+                    // only enable winner button (per new UX)
+                    const pickBtn = document.getElementById('pickWinnerBtn');
+                    if (pickBtn) pickBtn.disabled = false;
+                } else {
+                    showAlert('error', result.error || 'Xatolik yuz berdi');
+                }
+            } catch (error) {
+                showAlert('error', 'Server bilan bog\'lanishda xatolik: ' + error.message);
+            } finally {
+                showLoading(false);
+                document.getElementById('getCommentsBtn').disabled = false;
+            }
+        }
+
+        function displayComments(comments) {
+            const commentsList = document.getElementById('commentsList');
+            const commentCount = document.getElementById('commentCount');
+            const commentsResults = document.getElementById('commentsResults');
+            
+            commentCount.textContent = comments.length;
+            
+            commentsList.innerHTML = comments.map((comment, index) => {
+                const date = new Date(comment.created_at * 1000);
+                const dateStr = date.toLocaleString('uz-UZ');
+                
+                return `
+                    <div class="comment-item">
+                        <div class="comment-header">
+                            <div>
+                                <span class="comment-user">@${comment.username}</span>
+                                ${comment.is_verified ? '<span class="badge badge-verified">✓</span>' : ''}
+                                ${comment.full_name ? `<span style="color: #666; font-size: 0.9em;"> - ${comment.full_name}</span>` : ''}
+                            </div>
+                            <div class="comment-likes">
+                                ❤️ ${comment.like_count.toLocaleString()}
+                            </div>
+                        </div>
+                        <div class="comment-text">${comment.text}</div>
+                        <div class="comment-date">📅 ${dateStr}</div>
+                    </div>
+                `;
+            }).join('');
+            
+            commentsResults.style.display = 'block';
+            
+            // Smooth scroll
+            commentsResults.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        async function exportCommentsToExcel() {
+            if (commentsData.length === 0) {
+                showAlert('error', 'Avval commentlarni yuklang!');
+                return;
+            }
+
+            showLoading(true);
+
+            try {
+                const response = await fetch('/api/export-comments-excel', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        comments: commentsData,
+                        post_url: currentPostUrl
+                    })
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `post_comments_${new Date().getTime()}.xlsx`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                    
+                    showAlert('success', 'Excel fayl muvaffaqiyatli yuklab olindi!');
+                } else {
+                    const result = await response.json();
+                    showAlert('error', result.error || 'Xatolik yuz berdi');
+                }
+            } catch (error) {
+                showAlert('error', 'Yuklab olishda xatolik: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function getTopCommenters() {
+            if (commentsData.length === 0) {
+                showAlert('error', 'Avval commentlarni yuklang!');
+                return;
+            }
+
+            // Foydalanuvchilarni comment soniga qarab guruhlash
+            const userComments = {};
+            commentsData.forEach(comment => {
+                const username = comment.username;
+                if (!userComments[username]) {
+                    userComments[username] = {
+                        username: username,
+                        full_name: comment.full_name,
+                        is_verified: comment.is_verified,
+                        comment_count: 0,
+                        total_likes: 0,
+                        comments: []
+                    };
+                }
+                userComments[username].comment_count++;
+                userComments[username].total_likes += comment.like_count;
+                userComments[username].comments.push(comment);
+            });
+
+            // Top 10 ni tanlash
+            const topCommenters = Object.values(userComments)
+                .sort((a, b) => b.comment_count - a.comment_count)
+                .slice(0, 10);
+
+            // Ko'rsatish
+            displayTopCommenters(topCommenters);
+            showAlert('success', `Top ${topCommenters.length} ta commentchi ko'rsatildi!`);
+        }
+
+        function displayTopCommenters(topCommenters) {
+            const commentsList = document.getElementById('commentsList');
+            const commentCount = document.getElementById('commentCount');
+            const commentsResults = document.getElementById('commentsResults');
+            
+            commentCount.textContent = topCommenters.length;
+            
+            commentsList.innerHTML = topCommenters.map((user, index) => {
+                return `
+                    <div class="comment-item" style="border-left-color: #f5576c;">
+                        <div class="comment-header">
+                            <div>
+                                <span style="font-size: 1.2em; font-weight: bold;">#${index + 1}</span>
+                                <span class="comment-user" style="margin-left: 10px;">@${user.username}</span>
+                                ${user.is_verified ? '<span class="badge badge-verified">✓</span>' : ''}
+                                ${user.full_name ? `<span style="color: #666; font-size: 0.9em;"> - ${user.full_name}</span>` : ''}
+                            </div>
+                        </div>
+                        <div class="comment-text">
+                            <strong>💬 Commentlar:</strong> ${user.comment_count} ta<br>
+                            <strong>❤️ Jami Like:</strong> ${user.total_likes.toLocaleString()}<br>
+                            <strong>📊 O'rtacha Like:</strong> ${(user.total_likes / user.comment_count).toFixed(1)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            commentsResults.style.display = 'block';
+            commentsResults.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function getMostLikedComments() {
+            if (commentsData.length === 0) {
+                showAlert('error', 'Avval commentlarni yuklang!');
+                return;
+            }
+
+            // Eng ko'p like olgan commentlarni saralash
+            const sortedComments = [...commentsData]
+                .sort((a, b) => b.like_count - a.like_count)
+                .slice(0, 20);
+
+            displayComments(sortedComments);
+            showAlert('success', `Eng ko'p like olgan ${sortedComments.length} ta comment ko'rsatildi!`);
+        }
+
+        function getLeastLikedComments() {
+            if (commentsData.length === 0) {
+                showAlert('error', 'Avval commentlarni yuklang!');
+                return;
+            }
+
+            // Eng kam like olgan commentlarni saralash (kamdan ko'p)
+            const sorted = [...commentsData]
+                .sort((a, b) => a.like_count - b.like_count)
+                .slice(0, 20);
+
+            displayComments(sorted);
+            showAlert('success', `Eng kam like olgan ${sorted.length} ta comment ko'rsatildi!`);
+        }
+
+        function getRandomComments(count = 20) {
+            if (commentsData.length === 0) {
+                showAlert('error', 'Avval commentlarni yuklang!');
+                return;
+            }
+
+            // Fisher–Yates shuffle copy
+            const copy = [...commentsData];
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+
+            const selected = copy.slice(0, Math.min(count, copy.length));
+            displayComments(selected);
+            showAlert('success', `Tasodifiy ${selected.length} ta comment ko'rsatildi!`);
+        }
+
+        function pickWinner() {
+            if (commentsData.length === 0) {
+                showAlert('error', 'Avval commentlarni yuklang!');
+                return;
+            }
+
+            // Filter to unique usernames
+            const byUser = {};
+            commentsData.forEach(c => {
+                const username = (c.username || '').toLowerCase();
+                if (!username) return;
+                // keep array of comments per user if needed later
+                if (!byUser[username]) byUser[username] = [];
+                byUser[username].push(c);
+            });
+
+            const users = Object.keys(byUser);
+            if (users.length === 0) {
+                showAlert('error', 'Foydalanuvchi commentlari topilmadi');
+                return;
+            }
+
+            // Pick a random user
+            const winnerIndex = Math.floor(Math.random() * users.length);
+            const winnerUser = users[winnerIndex];
+            const winnerComments = byUser[winnerUser];
+
+            // Show winner prominently
+            const commentsList = document.getElementById('commentsList');
+            const commentsResults = document.getElementById('commentsResults');
+            commentsList.innerHTML = `
+                <div class="comment-item" style="border-left-color: #F5A623; background: linear-gradient(180deg, rgba(245,166,35,0.06), #fff);">
+                    <div class="comment-header">
+                        <div>
+                            <span class="comment-user">@${winnerUser}</span>
+                        </div>
+                        <div class="comment-likes">🏆 G'olib</div>
+                    </div>
+                    <div class="comment-text"><strong>Tanlangan commentlar soni:</strong> ${winnerComments.length}</div>
+                </div>
+            `;
+            commentsResults.style.display = 'block';
+            commentsResults.scrollIntoView({ behavior: 'smooth' });
+
+            showAlert('success', `G'olib: @${winnerUser}`);
+
+            // Show winner in modal
+            const modalWinnerUsername = document.getElementById('modalWinnerUsername');
+            const modalWinnerStats = document.getElementById('modalWinnerStats');
+            const modalProfileBtn = document.getElementById('modalProfileBtn');
+            const winnerModal = document.getElementById('winnerModal');
+
+            modalWinnerUsername.textContent = '@' + winnerUser;
+            modalWinnerStats.innerHTML = `Commentlar soni: <strong>${winnerComments.length}</strong>`;
+            const profileUrl = `https://www.instagram.com/${encodeURIComponent(winnerUser)}/`;
+            modalProfileBtn.href = profileUrl;
+
+            // Show modal with backdrop
+            winnerModal.classList.add('active');
+
+            // Trigger celebration (confetti)
+            launchConfetti();
+        }
+
+        function closeWinnerModal() {
+            const winnerModal = document.getElementById('winnerModal');
+            winnerModal.classList.remove('active');
+        }
+
+        // Close modal when backdrop is clicked
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('winnerModal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        closeWinnerModal();
+                    }
+                });
+            }
+        });
+
+        // Simple confetti implementation
+        function launchConfetti() {
+            // create canvas if not exists
+            let canvas = document.getElementById('confettiCanvas');
+            if (!canvas) {
+                canvas = document.createElement('canvas');
+                canvas.id = 'confettiCanvas';
+                canvas.style.position = 'fixed';
+                canvas.style.left = '0';
+                canvas.style.top = '0';
+                canvas.style.width = '100%';
+                canvas.style.height = '100%';
+                canvas.style.pointerEvents = 'none';
+                canvas.style.zIndex = 9999;
+                document.body.appendChild(canvas);
+            }
+
+            const ctx = canvas.getContext('2d');
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            const colors = ['#F5A623', '#FCD34D', '#ffffff', '#ff6b6b', '#7bd389'];
+            const pieces = [];
+            const count = 80;
+
+            for (let i = 0; i < count; i++) {
+                pieces.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * -canvas.height,
+                    w: 6 + Math.random() * 8,
+                    h: 8 + Math.random() * 10,
+                    r: Math.random() * 360,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    speed: 2 + Math.random() * 6,
+                    tilt: Math.random() * 10
+                });
+            }
+
+            let ticks = 0;
+            function update() {
+                ticks++;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let p of pieces) {
+                    p.y += p.speed;
+                    p.x += Math.sin(ticks / 10 + p.tilt) * 1.5;
+                    p.r += p.speed / 5;
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.r * Math.PI / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+                    ctx.restore();
+                }
+                // stop after some time
+                if (ticks < 220) requestAnimationFrame(update);
+                else {
+                    ctx.clearRect(0,0,canvas.width,canvas.height);
+                    // remove canvas after short delay
+                    setTimeout(() => { try { canvas.remove(); } catch(e){} }, 200);
+                }
+            }
+            requestAnimationFrame(update);
+        }
+    </script>
+</body>
+</html>
