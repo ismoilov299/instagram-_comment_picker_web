@@ -7,7 +7,7 @@ import pandas as pd
 from io import BytesIO
 import sys
 
-# Agar instagram_api.py shu papkada bo'lsa:
+# Agar Instagram_api.py shu papkada bo'lsa:
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from instagram_api import InstagramAPI
 
@@ -228,4 +228,4 @@ def export_comments_to_excel():
 
 if __name__ == '__main__':
     # Development server uchun:
-    app.run(debug=True, host='0.0.0.0', port=8000)
+    app.run(debug=True, host='0.0.0.0', port=8002)
