@@ -81,23 +81,22 @@ def main():
     print("Instagram API Test")
     print("=" * 60)
     print()
-    
-    # Test ni ishga tushirish
-    loop = asyncio.get_event_loop()
-    success = loop.run_until_complete(test_api())
-    
+
+    # Test ni ishga tushirish (zamonaviy usul)
+    success = asyncio.run(test_api())
+
     print()
     print("=" * 60)
-    
+
     if success:
         print("✅ TEST MUVAFFAQIYATLI")
         print("🚀 Endi 'python app.py' bilan web dasturni ishga tushiring")
     else:
         print("❌ TEST MUVAFFAQIYATSIZ")
         print("📖 README.md faylini o'qing")
-    
+
     print("=" * 60)
-    
+
     sys.exit(0 if success else 1)
 
 if __name__ == '__main__':

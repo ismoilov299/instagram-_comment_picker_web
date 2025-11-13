@@ -479,7 +479,7 @@
             </div>
 
             <div class="results" id="commentsResults">
-                <h3>Commentlar (<span id="commentCount">0</span> ta)</h3>
+                <h3 id="commentsTitle">Commentlar</h3>
                 <div id="commentsList"></div>
                 <!-- Winner card (hidden until a winner is picked) -->
                 <div id="winnerCard" style="display:none; margin-top:16px;">
@@ -493,7 +493,7 @@
                         </div>
                         <div id="winnerMeta" class="comment-text" style="margin-bottom:10px;"></div>
                         <div style="display:flex; gap:10px; justify-content:flex-start;">
-                            <a id="winnerProfileBtn" class="btn-primary" href="#" target="_blank" rel="noopener noreferrer" style="text-decoration:none; display:inline-flex; align-items:center;">Profileni ko'rish</a>
+                            <a id="winnerProfileBtn" class="btn-primary" href="#" target="_blank" rel="noopener noreferrer" style="text-decoration:none; display:inline-flex; align-items:center;">Profilni ko'rish</a>
                             <button id="winnerCloseBtn" class="btn-success" style="background:transparent; border:1px solid rgba(245,166,35,0.12); color:#F5A623;" onclick="document.getElementById('winnerCard').style.display='none'">Yopish</button>
                         </div>
                     </div>
@@ -662,10 +662,11 @@
 
         function displayComments(comments) {
             const commentsList = document.getElementById('commentsList');
-            const commentCount = document.getElementById('commentCount');
+            const commentsTitle = document.getElementById('commentsTitle');
             const commentsResults = document.getElementById('commentsResults');
-            
-            commentCount.textContent = comments.length;
+
+            // Barcha commentlar olindi deb ko'rsatish (sonsiz)
+            commentsTitle.textContent = 'Barcha commentlar olindi';
             
             commentsList.innerHTML = comments.map((comment, index) => {
                 const date = new Date(comment.created_at * 1000);
@@ -775,10 +776,10 @@
 
         function displayTopCommenters(topCommenters) {
             const commentsList = document.getElementById('commentsList');
-            const commentCount = document.getElementById('commentCount');
+            const commentsTitle = document.getElementById('commentsTitle');
             const commentsResults = document.getElementById('commentsResults');
-            
-            commentCount.textContent = topCommenters.length;
+
+            commentsTitle.textContent = 'Barcha commentlar olindi';
             
             commentsList.innerHTML = topCommenters.map((user, index) => {
                 return `

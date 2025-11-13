@@ -25,23 +25,27 @@ api = InstagramAPI(api_key=RAPIDAPI_KEY, api_host=RAPIDAPI_HOST)
 def run_async(coro):
     """
     Async coroutine'ni Flask (sync) kontekstida xavfsiz chaqirish.
-    - Avvalo asyncio.run() sinab ko'radi.
-    - Agar event loop allaqachon ishlayotgan bo'lsa (masalan, test yoki ASGI muhit),
-      fallback sifatida yangi loop yaratib run_until_complete ishlatadi.
+    Har safar yangi event loop yaratib, to'g'ri boshqaradi.
     """
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     try:
-        return asyncio.run(coro)
-    except RuntimeError:
-        # event loop allaqachon ishlamoqda -> fallback
-        loop = asyncio.new_event_loop()
+        return loop.run_until_complete(coro)
+    finally:
+        # Loop'ni to'g'ri yopish
         try:
-            asyncio.set_event_loop(loop)
-            return loop.run_until_complete(coro)
+            # Barcha pending task'larni tozalash
+            pending = asyncio.all_tasks(loop)
+            for task in pending:
+                task.cancel()
+            # Pending task'larni yakunlash
+            if pending:
+                loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+            loop.close()
+        except Exception as e:
+            print(f"Loop cleanup error: {e}")
         finally:
-            try:
-                loop.close()
-            except Exception:
-                pass
+            asyncio.set_event_loop(None)
 
 
 @app.route('/')

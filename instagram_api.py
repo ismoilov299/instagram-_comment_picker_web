@@ -27,13 +27,25 @@ class InstagramAPI:
 
     async def _get_session(self) -> ClientSession:
         """Get or create session pool for connection reuse"""
-        if self._session is None or self._session.closed:
-            connector = aiohttp.TCPConnector(
-                limit=self.session_pool_size,
-                force_close=False,
-                ssl=ssl.create_default_context(cafile=certifi.where())  # SSL qo‘shish
-            )
-            self._session = aiohttp.ClientSession(connector=connector, timeout=self._connection_timeout)
+        # Har safar yangi session yaratish (event loop muammolarini oldini olish uchun)
+        try:
+            # Eski sessionni tekshirish
+            if self._session and not self._session.closed:
+                # Agar session hali ochiq bo'lsa, uni yopamiz
+                try:
+                    await self._session.close()
+                except:
+                    pass
+        except:
+            pass
+
+        # Yangi session yaratish
+        connector = aiohttp.TCPConnector(
+            limit=self.session_pool_size,
+            force_close=False,
+            ssl=ssl.create_default_context(cafile=certifi.where())
+        )
+        self._session = aiohttp.ClientSession(connector=connector, timeout=self._connection_timeout)
         return self._session
 
 
