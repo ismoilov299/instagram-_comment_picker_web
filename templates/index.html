@@ -880,20 +880,32 @@
             const winnerUser = users[winnerIndex];
             const winnerComments = byUser[winnerUser];
 
-            // Show winner prominently
+            // Show winner's comment(s)
             const commentsList = document.getElementById('commentsList');
             const commentsResults = document.getElementById('commentsResults');
-            commentsList.innerHTML = `
-                <div class="comment-item" style="border-left-color: #F5A623; background: linear-gradient(180deg, rgba(245,166,35,0.06), #fff);">
-                    <div class="comment-header">
-                        <div>
-                            <span class="comment-user">@${winnerUser}</span>
+            
+            // Display all comments from the winner
+            commentsList.innerHTML = winnerComments.map((comment, index) => {
+                const date = new Date(comment.created_at * 1000);
+                const dateStr = date.toLocaleString('uz-UZ');
+                
+                return `
+                    <div class="comment-item" style="border-left-color: #F5A623; background: linear-gradient(180deg, rgba(245,166,35,0.06), #fff);">
+                        <div class="comment-header">
+                            <div>
+                                <span class="comment-user">@${comment.username}</span>
+                                ${comment.is_verified ? '<span class="badge badge-verified">✓</span>' : ''}
+                                ${comment.full_name ? `<span style="color: #666; font-size: 0.9em;"> - ${comment.full_name}</span>` : ''}
+                            </div>
+                            <div class="comment-likes">🏆 G'olib</div>
                         </div>
-                        <div class="comment-likes">🏆 G'olib</div>
+                        <div class="comment-text">${comment.text}</div>
+                        <div class="comment-date">📅 ${dateStr}</div>
+                        <div class="comment-likes" style="margin-top: 6px;">❤️ ${comment.like_count.toLocaleString()}</div>
                     </div>
-                    <div class="comment-text"><strong>Tanlangan commentlar soni:</strong> ${winnerComments.length}</div>
-                </div>
-            `;
+                `;
+            }).join('');
+            
             commentsResults.style.display = 'block';
             commentsResults.scrollIntoView({ behavior: 'smooth' });
 
